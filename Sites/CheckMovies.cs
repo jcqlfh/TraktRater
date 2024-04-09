@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -16,10 +17,9 @@ namespace TraktRater.Sites
         private string CheckMoviesFilename;
         private int DelimiterOption;
         private bool ImportCancelled;
-        private readonly CsvConfiguration csvConfiguration = new CsvConfiguration()
+        private readonly CsvConfiguration csvConfiguration = new CsvConfiguration(CultureInfo.CurrentCulture)
         {
             HasHeaderRecord = true,
-            IsHeaderCaseSensitive = false
         };
 
         public CheckMovies(string checkMoviesFilename, int delimiter)
@@ -44,10 +44,10 @@ namespace TraktRater.Sites
             // iCheckMovies does not have a compatible ratings system with trakt.tv
             // We can sync collection, watched and watchlist data.
 
-            if (ImportCancelled) return;            
+            if (ImportCancelled) return;
 
             var cmMovieList = ParseCheckMoviesCsv();
-            
+
             // Add movies to watchlist
             var watchListMovies = AppSettings.CheckMoviesAddWatchedMoviesToWatchlist ? cmMovieList.Where(cm => cm.IsChecked) : cmMovieList.Where(cm => cm.InWatchlist).ToList();
             if (watchListMovies.Any())
@@ -55,7 +55,7 @@ namespace TraktRater.Sites
                 AddMoviesToWatchlist(watchListMovies);
                 if (ImportCancelled) return;
             }
-            
+
             // add movies to watched history
             if (AppSettings.CheckMoviesUpdateWatchedHistory)
             {

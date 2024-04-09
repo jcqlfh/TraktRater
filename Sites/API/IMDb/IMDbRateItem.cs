@@ -6,7 +6,7 @@
     using global::TraktRater.TraktAPI.DataStructures;
     using System;
 
-    sealed class IMDbRatingCsvMap : CsvClassMap<IMDbRateItem>
+    sealed class IMDbRatingCsvMap : ClassMap<IMDbRateItem>
     {
         public IMDbRatingCsvMap()
         {
@@ -45,7 +45,7 @@
         public string Type { get; set; }
 
         public float? SiteRating { get; set; }
-        
+
         public int? Runtime { get; set; }
 
         public int? Year { get; set; }
@@ -92,7 +92,7 @@
                 WatchedAt = AppSettings.WatchedOnReleaseDay ? "released" : GetFormattedDate(RatedDate)
             };
         }
-        
+
         private string GetFormattedDate(string imdbDateTime)
         {
             DateTime result;

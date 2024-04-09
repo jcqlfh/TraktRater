@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -28,7 +29,7 @@ namespace TraktRater.Sites
         private readonly string mWishlistFilename;
 
         private bool mImportCancelled;
-        private readonly CsvConfiguration mCsvConfiguration = new CsvConfiguration();
+        private readonly CsvConfiguration mCsvConfiguration = new CsvConfiguration(CultureInfo.CurrentCulture);
 
         #endregion
         public MovieLens(string aRatingsFilename, string aActivityFilename, string aTagsFilename, string aWishListFilename)
@@ -46,7 +47,7 @@ namespace TraktRater.Sites
             }
 
             // tags are currently ignored
-            mTagsFilename = aTagsFilename; 
+            mTagsFilename = aTagsFilename;
             if (!string.IsNullOrEmpty(mTagsFilename))
             {
                 mImportTags = File.Exists(mTagsFilename);
@@ -81,7 +82,7 @@ namespace TraktRater.Sites
 
             List<MovieLensRatingItem> lRatings;
             List<MovieLensWishlistItem> lWishlist;
-            
+
             List<MovieLensActivityItem.ActivityDate> lRatingActivities = new List<MovieLensActivityItem.ActivityDate>();
             List<MovieLensActivityItem.ActivityDate> lUserListActivities = new List<MovieLensActivityItem.ActivityDate>();
 
@@ -102,7 +103,7 @@ namespace TraktRater.Sites
                 lUserListActivities = lActivities.Where(a => a.ActionType == "user-list").Select(w => w.ToUserListActivity()).ToList();
                 UIUtils.UpdateStatus($"Found {lUserListActivities.Count} user-list activities in Movie Lens Activity Log CSV file");
             }
-            
+
             if (mImportRatings)
             {
                 lRatings = ParseMovieRatingsCsv();
@@ -206,7 +207,7 @@ namespace TraktRater.Sites
                 Thread.Sleep(2000);
                 return;
             }
-            
+
             if (mImportCancelled) return;
 
             UIUtils.UpdateStatus("Found {0} rated movies on trakt", lRatedTraktMovies.Count());
@@ -286,7 +287,7 @@ namespace TraktRater.Sites
             {
                 if (mImportCancelled) return;
 
-                UIUtils.UpdateStatus($"Importing page {i + 1}/{lPages} Movie Lens movies into watchlist...");                
+                UIUtils.UpdateStatus($"Importing page {i + 1}/{lPages} Movie Lens movies into watchlist...");
 
                 var lMoviesToSync = new TraktMovieSync()
                 {
@@ -327,50 +328,43 @@ namespace TraktRater.Sites
 
         private List<MovieLensRatingItem> ParseMovieRatingsCsv()
         {
-            mCsvConfiguration.RegisterClassMap<CSVRatingsFileDefinitionMap>();
-
             UIUtils.UpdateStatus("Parsing Movie Lens Ratings CSV file");
             var textReader = File.OpenText(mRatingsFilename);
 
             var csv = new CsvReader(textReader, mCsvConfiguration);
+            csv.Context.RegisterClassMap<CSVRatingsFileDefinitionMap>();
             return csv.GetRecords<MovieLensRatingItem>().ToList();
         }
 
         private List<MovieLensWishlistItem> ParseMovieWishlistCsv()
         {
-            mCsvConfiguration.RegisterClassMap<CSVWishlistFileDefinitionMap>();
-
             UIUtils.UpdateStatus("Parsing Movie Lens Wishlist CSV file");
             var textReader = File.OpenText(mWishlistFilename);
 
             var csv = new CsvReader(textReader, mCsvConfiguration);
+            csv.Context.RegisterClassMap<CSVWishlistFileDefinitionMap>();
             return csv.GetRecords<MovieLensWishlistItem>().ToList();
         }
 
         private List<MovieLensActivityItem> ParseMovieActivitiesCsv()
         {
-            mCsvConfiguration.RegisterClassMap<CSVActivityFileDefinitionMap>();
-
             UIUtils.UpdateStatus("Parsing Movie Lens Activity Log CSV file");
             var textReader = File.OpenText(mActivityFilename);
 
             var csv = new CsvReader(textReader, mCsvConfiguration);
+            csv.Context.RegisterClassMap<CSVActivityFileDefinitionMap>();
             return csv.GetRecords<MovieLensActivityItem>().ToList();
         }
 
         private void SetCSVHelperOptions()
         {
-            mCsvConfiguration.IsHeaderCaseSensitive = false;
-
-            // MovieLens use "." for decimal seperator so set culture to cater for this            
-            mCsvConfiguration.CultureInfo = new System.Globalization.CultureInfo("en-US");
 
             // if we're unable parse a row, log the details for analysis
-            mCsvConfiguration.IgnoreReadingExceptions = true;
-            mCsvConfiguration.ReadingExceptionCallback = (ex, row) =>
-            {
-                FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
-            };
+            // mCsvConfiguration.IgnoreReadingExceptions = true;
+            // mCsvConfiguration.ReadingExceptionCallback = (ex, row) =>
+            // {
+            //     FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
+            // };
         }
     }
 }

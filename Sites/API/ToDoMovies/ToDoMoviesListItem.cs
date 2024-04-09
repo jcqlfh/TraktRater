@@ -6,7 +6,7 @@ using System;
 
 namespace TraktRater.Sites.API.ToDoMovies
 {
-    sealed class CSVFileDefinitionMap : CsvClassMap<ToDoMoviesListItem>
+    sealed class CSVFileDefinitionMap : ClassMap<ToDoMoviesListItem>
     {
         public CSVFileDefinitionMap()
         {
@@ -29,7 +29,7 @@ namespace TraktRater.Sites.API.ToDoMovies
         public int? Rating { get; set; }
         public string ToDoMovieUrl { get; set; }
         public int TheMovieDatabaseID { get; set; }
-        
+
         public TraktMovieRating ToTraktRatedMovie()
         {
             return new TraktMovieRating()

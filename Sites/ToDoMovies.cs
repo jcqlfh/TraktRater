@@ -5,6 +5,7 @@ using global::TraktRater.Sites.API.ToDoMovies;
 using global::TraktRater.TraktAPI.DataStructures;
 using global::TraktRater.UI;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -17,7 +18,7 @@ namespace TraktRater.Sites
 
         private string ToDoMoviesFilename;
         private bool ImportCancelled;
-        private readonly CsvConfiguration csvConfiguration = new CsvConfiguration();
+        private readonly CsvConfiguration csvConfiguration = new CsvConfiguration(CultureInfo.CurrentCulture);
 
         #endregion
 
@@ -80,7 +81,7 @@ namespace TraktRater.Sites
         #endregion
 
         #region Private Methods
-        
+
         private void AddMoviesToWatchedHistory(List<TraktMovieWatched> watchedMovies)
         {
             // filter out movies that are already added to watched history
@@ -168,7 +169,7 @@ namespace TraktRater.Sites
                 }
             }
         }
-        
+
         private void HandleResponse(TraktSyncResponse response)
         {
             if (response == null)
@@ -189,12 +190,13 @@ namespace TraktRater.Sites
 
         private List<ToDoMoviesListItem> ParseToDoMoviesCsv()
         {
-            csvConfiguration.RegisterClassMap<CSVFileDefinitionMap>();
 
             UIUtils.UpdateStatus("Parsing ToDoMovies CSV file");
             var textReader = File.OpenText(ToDoMoviesFilename);
 
             var csv = new CsvReader(textReader, csvConfiguration);
+            csv.Context.RegisterClassMap<CSVFileDefinitionMap>();
+
             return csv.GetRecords<ToDoMoviesListItem>().ToList();
         }
 

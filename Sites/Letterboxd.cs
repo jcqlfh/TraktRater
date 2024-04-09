@@ -9,7 +9,7 @@
     using System.Linq;
     using System.Threading;
     using Microsoft.VisualBasic.FileIO;
-    
+
     using global::TraktRater.Extensions;
     using global::TraktRater.Logger;
     using global::TraktRater.Settings;
@@ -24,7 +24,7 @@
 
         bool mImportCancelled = false;
 
-        readonly CsvConfiguration mCsvConfiguration = new CsvConfiguration();
+        readonly CsvConfiguration mCsvConfiguration = new CsvConfiguration(CultureInfo.CurrentCulture);
 
         readonly bool mImportRatings = false;
         readonly bool mImportWatched = false;
@@ -43,14 +43,14 @@
 
         #region Constructor
 
-        public Letterboxd(string aRatingsFile, string aWatchedFile, string aWatchlistFile, string aDiaryFile, List<string> aCustomLists )
+        public Letterboxd(string aRatingsFile, string aWatchedFile, string aWatchlistFile, string aDiaryFile, List<string> aCustomLists)
         {
             mLetterboxdRatingsFile = aRatingsFile;
             mLetterboxdWatchedFile = aWatchedFile;
             mLetterboxdWatchlistFile = aWatchlistFile;
             mLetterboxdDiaryFile = aDiaryFile;
             mCustomListsCsvs = aCustomLists;
-            
+
             mImportRatings = File.Exists(mLetterboxdRatingsFile);
             mImportWatched = File.Exists(mLetterboxdWatchedFile);
             mImportWatchlist = File.Exists(mLetterboxdWatchlistFile);
@@ -127,27 +127,27 @@
             #endregion
 
             #region Parse Custom List CSVs
-            UIUtils.UpdateStatus( "Reading Letterboxd custom lists export..." );
-            if ( mImportCustomLists )
+            UIUtils.UpdateStatus("Reading Letterboxd custom lists export...");
+            if (mImportCustomLists)
             {
-                mCsvConfiguration.RegisterClassMap<LetterboxdListCsvMap>();
+                //mCsvConfiguration.RegisterClassMap<LetterboxdListCsvMap>();
 
-                foreach ( var list in mCustomListsCsvs )
+                foreach (var list in mCustomListsCsvs)
                 {
-                    UIUtils.UpdateStatus( $"Reading Letterboxd custom list '{list}'" );
+                    UIUtils.UpdateStatus($"Reading Letterboxd custom list '{list}'");
 
-                    var lListCsvItems = ParseCsvFile<LetterboxdListItem>( list );
-                    if ( lListCsvItems == null )
+                    var lListCsvItems = ParseCsvFile<LetterboxdListItem>(list);
+                    if (lListCsvItems == null)
                     {
-                        UIUtils.UpdateStatus( "Failed to parse Letterboxd custom list file!", true );
-                        Thread.Sleep( 2000 );
+                        UIUtils.UpdateStatus("Failed to parse Letterboxd custom list file!", true);
+                        Thread.Sleep(2000);
                         continue;
                     }
-                    lCustomLists.Add( list, lListCsvItems );
+                    lCustomLists.Add(list, lListCsvItems);
                 }
-                mCsvConfiguration.UnregisterClassMap<LetterboxdListCsvMap>();
+                //mCsvConfiguration.UnregisterClassMap<LetterboxdListCsvMap>();
             }
-            if ( mImportCancelled ) return;
+            if (mImportCancelled) return;
             #endregion
 
             #region Import Rated Movies
@@ -276,96 +276,96 @@
             #endregion
 
             #region Import Custom Lists
-            if ( lCustomLists.Count > 0 )
+            if (lCustomLists.Count > 0)
             {
-                UIUtils.UpdateStatus( "Requesting custom lists from trakt..." );
+                UIUtils.UpdateStatus("Requesting custom lists from trakt...");
                 var lTraktCustomLists = TraktAPI.GetCustomLists();
-                if ( lTraktCustomLists == null )
+                if (lTraktCustomLists == null)
                 {
-                    UIUtils.UpdateStatus( "Error requesting custom lists from trakt.tv", true );
-                    Thread.Sleep( 2000 );
+                    UIUtils.UpdateStatus("Error requesting custom lists from trakt.tv", true);
+                    Thread.Sleep(2000);
                     return;
                 }
 
-                UIUtils.UpdateStatus( $"Found {lTraktCustomLists.Count()} custom lists on trakt.tv" );
+                UIUtils.UpdateStatus($"Found {lTraktCustomLists.Count()} custom lists on trakt.tv");
 
-                foreach ( var list in lCustomLists )
+                foreach (var list in lCustomLists)
                 {
                     bool lListCreated = false;
-                    string lListName = Path.GetFileNameWithoutExtension( list.Key );
+                    string lListName = Path.GetFileNameWithoutExtension(list.Key);
 
                     // create the list if we don't have it
-                    TraktListDetail lTraktCustomList = lTraktCustomLists.FirstOrDefault( l => l.Name == lListName );
+                    TraktListDetail lTraktCustomList = lTraktCustomLists.FirstOrDefault(l => l.Name == lListName);
 
-                    if ( lTraktCustomList == null )
+                    if (lTraktCustomList == null)
                     {
-                        UIUtils.UpdateStatus( $"Creating new custom list '{lListName}' on trakt.tv" );
+                        UIUtils.UpdateStatus($"Creating new custom list '{lListName}' on trakt.tv");
                         var lTraktList = new TraktList
                         {
                             Name = lListName,
                             DisplayNumbers = true,
                         };
 
-                        lTraktCustomList = TraktAPI.CreateCustomList( lTraktList );
-                        if ( lTraktCustomList == null )
+                        lTraktCustomList = TraktAPI.CreateCustomList(lTraktList);
+                        if (lTraktCustomList == null)
                         {
-                            UIUtils.UpdateStatus( "Error creating custom list on trakt.tv, skipping list creation", true );
-                            Thread.Sleep( 2000 );
+                            UIUtils.UpdateStatus("Error creating custom list on trakt.tv, skipping list creation", true);
+                            Thread.Sleep(2000);
                             continue;
                         }
 
                         lListCreated = true;
                     }
-                    
-                    FileLog.Info( $"Found {list.Value.Count} movies in Letterboxd {lListName} list" );
+
+                    FileLog.Info($"Found {list.Value.Count} movies in Letterboxd {lListName} list");
 
                     // if the list already exists, get current items for list 
-                    if ( !lListCreated )
+                    if (!lListCreated)
                     {
-                        lTraktCustomList = lTraktCustomLists.FirstOrDefault( l => l.Name == lListName );
+                        lTraktCustomList = lTraktCustomLists.FirstOrDefault(l => l.Name == lListName);
 
-                        UIUtils.UpdateStatus( $"Requesting existing custom list '{lListName}' items from trakt..." );
-                        var lTraktListItems = TraktAPI.GetCustomListItems( lTraktCustomList.Ids.Trakt.ToString() );
-                        if ( lTraktListItems == null )
+                        UIUtils.UpdateStatus($"Requesting existing custom list '{lListName}' items from trakt...");
+                        var lTraktListItems = TraktAPI.GetCustomListItems(lTraktCustomList.Ids.Trakt.ToString());
+                        if (lTraktListItems == null)
                         {
-                            UIUtils.UpdateStatus( "Error requesting custom list items from trakt.tv, skipping list creation", true );
-                            Thread.Sleep( 2000 );
+                            UIUtils.UpdateStatus("Error requesting custom list items from trakt.tv, skipping list creation", true);
+                            Thread.Sleep(2000);
                             continue;
                         }
 
                         // filter out existing items from CSV so we don't send again
-                        FileLog.Info( $"Filtering out existing items from Letterboxd list '{lListName}' so we don't send again to trakt.tv" );
-                        list.Value.RemoveAll( i => lTraktListItems.FirstOrDefault( l => l.Movie.Title.ToLowerInvariant() == i.Title.ToLowerInvariant() && l.Movie.Year == i.Year ) != null );
+                        FileLog.Info($"Filtering out existing items from Letterboxd list '{lListName}' so we don't send again to trakt.tv");
+                        list.Value.RemoveAll(i => lTraktListItems.FirstOrDefault(l => l.Movie.Title.ToLowerInvariant() == i.Title.ToLowerInvariant() && l.Movie.Year == i.Year) != null);
                     }
 
-                    UIUtils.UpdateStatus( $"Importing {list.Value.Count} new movies into {lListName} custom list..." );
+                    UIUtils.UpdateStatus($"Importing {list.Value.Count} new movies into {lListName} custom list...");
 
-                    var lLetterboxdCsvListMovies = list.Value.Select( m => m.ToTraktMovie() );
+                    var lLetterboxdCsvListMovies = list.Value.Select(m => m.ToTraktMovie());
 
-                    lPages = ( int )Math.Ceiling( ( double )list.Value.Count / lPageSize );
-                    for ( int i = 0; i < lPages; i++ )
+                    lPages = (int)Math.Ceiling((double)list.Value.Count / lPageSize);
+                    for (int i = 0; i < lPages; i++)
                     {
-                        UIUtils.UpdateStatus( $"Importing page {i + 1}/{lPages} Letterboxd custom list movies..." );
+                        UIUtils.UpdateStatus($"Importing page {i + 1}/{lPages} Letterboxd custom list movies...");
 
                         // create list sync object to hold list items
                         var lTraktMovieSync = new TraktSyncAll
                         {
-                            Movies = lLetterboxdCsvListMovies.Skip( i * lPageSize ).Take( lPageSize ).ToList()
+                            Movies = lLetterboxdCsvListMovies.Skip(i * lPageSize).Take(lPageSize).ToList()
                         };
 
-                        var lResponse = TraktAPI.AddItemsToList( lTraktCustomList.Ids.Trakt.ToString(), lTraktMovieSync );
-                        if ( lResponse == null )
+                        var lResponse = TraktAPI.AddItemsToList(lTraktCustomList.Ids.Trakt.ToString(), lTraktMovieSync);
+                        if (lResponse == null)
                         {
-                            UIUtils.UpdateStatus( "Failed to send custom list items for Letterboxd movies", true );
-                            Thread.Sleep( 2000 );
+                            UIUtils.UpdateStatus("Failed to send custom list items for Letterboxd movies", true);
+                            Thread.Sleep(2000);
                         }
-                        else if ( lResponse.NotFound.Movies.Count > 0 )
+                        else if (lResponse.NotFound.Movies.Count > 0)
                         {
-                            UIUtils.UpdateStatus( $"Unable to sync custom list items for {lResponse.NotFound.Movies.Count} movies as they're not found on trakt.tv!" );
-                            Thread.Sleep( 1000 );
+                            UIUtils.UpdateStatus($"Unable to sync custom list items for {lResponse.NotFound.Movies.Count} movies as they're not found on trakt.tv!");
+                            Thread.Sleep(1000);
                         }
 
-                        if ( mImportCancelled ) return;
+                        if (mImportCancelled) return;
                     }
                 }
             }
@@ -384,11 +384,11 @@
         private void SetCSVHelperOptions()
         {
             // if we're unable parse a row, log the details for analysis
-            mCsvConfiguration.IgnoreReadingExceptions = true;
-            mCsvConfiguration.ReadingExceptionCallback = ( ex, row ) =>
-            {
-                FileLog.Error( $"Error reading row '{ex.Data["CsvHelper"]}'" );
-            };
+            // mCsvConfiguration.IgnoreReadingExceptions = true;
+            // mCsvConfiguration.ReadingExceptionCallback = (ex, row) =>
+            // {
+            //     FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
+            // };
         }
 
         /// <summary>
@@ -397,7 +397,7 @@
         /// <typeparam name="T">LetterboxdListItem or ...</typeparam>
         /// <param name="aFilename">Full path to CSV file to read</param>
         /// <returns>Records of type T</returns>
-        private List<T> ParseCsvFile<T>( string aFilename )
+        private List<T> ParseCsvFile<T>(string aFilename)
         {
             int lStartLine = 0;
             bool lValidCsv = true;
@@ -437,8 +437,9 @@
                     reader.ReadLine();
                 }
 
-                using ( var csv = new CsvReader( reader, mCsvConfiguration ) )
+                using (var csv = new CsvReader(reader, mCsvConfiguration))
                 {
+                    csv.Context.RegisterClassMap<LetterboxdListCsvMap>();
                     return csv.GetRecords<T>().ToList();
                 }
             }
@@ -482,7 +483,7 @@
                         lExportItem.Add(lFieldHeadings[lIndex], field);
                         lIndex++;
                     }
-                    
+
                     // check no invalid entries                                    
                     if (!string.IsNullOrEmpty(lExportItem[LetterboxdFieldMapping.cTitle]))
                     {
@@ -504,13 +505,13 @@
             var lTraktMovies = new List<TraktMovieRating>();
 
             lTraktMovies.AddRange(from movie in aMovies
-                                 select new TraktMovieRating
-                                 {
-                                     Title = movie[LetterboxdFieldMapping.cTitle],
-                                     Year = movie[LetterboxdFieldMapping.cYear].ToYear(),
-                                     Rating = (int)Math.Ceiling(float.Parse(movie[LetterboxdFieldMapping.cRating], CultureInfo.InvariantCulture.NumberFormat) * 2),
-                                     RatedAt = GetDateAdded(movie)
-                                 });
+                                  select new TraktMovieRating
+                                  {
+                                      Title = movie[LetterboxdFieldMapping.cTitle],
+                                      Year = movie[LetterboxdFieldMapping.cYear].ToYear(),
+                                      Rating = (int)Math.Ceiling(float.Parse(movie[LetterboxdFieldMapping.cRating], CultureInfo.InvariantCulture.NumberFormat) * 2),
+                                      RatedAt = GetDateAdded(movie)
+                                  });
 
             var lMovieRateData = new TraktMovieRatingSync
             {
@@ -525,12 +526,12 @@
             var lTraktMovies = new List<TraktMovieWatched>();
 
             lTraktMovies.AddRange(from movie in aMovies
-                                 select new TraktMovieWatched
-                                 {
-                                     Title = movie[LetterboxdFieldMapping.cTitle],
-                                     Year = movie[LetterboxdFieldMapping.cYear].ToYear(),
-                                     WatchedAt = GetWatchedDate(movie)
-                                 });
+                                  select new TraktMovieWatched
+                                  {
+                                      Title = movie[LetterboxdFieldMapping.cTitle],
+                                      Year = movie[LetterboxdFieldMapping.cYear].ToYear(),
+                                      WatchedAt = GetWatchedDate(movie)
+                                  });
 
             var lMovieData = new TraktMovieWatchedSync
             {

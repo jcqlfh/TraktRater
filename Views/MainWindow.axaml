@@ -1,0 +1,228 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:TraktRater.ViewModels"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:grb="using:GroupBox.Avalonia.Controls"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="TraktRater.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="TraktRater">
+
+    <Window.Styles>
+
+        <Style Selector="Button.link">
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Content="{TemplateBinding Content}">
+                        <ContentPresenter.Styles>
+                            <Style Selector="TextBlock">
+                                <Setter Property="Foreground" Value="{TemplateBinding Foreground}" />
+                                <Setter Property="FontSize" Value="{TemplateBinding FontSize}" />
+                                <Setter Property="TextDecorations" Value="Underline" />
+                            </Style>
+                        </ContentPresenter.Styles>
+                    </ContentPresenter>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </Window.Styles>
+
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at
+        App.axaml.cs) -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <StackPanel Margin="10">
+        <TabControl x:Name="tabTraktRater" MinWidth="652" MinHeight="398" Padding="3">
+            <TabItem x:Name="tabPage1" Header="Login" Padding="3">
+                <StackPanel Margin="10" Spacing="20">
+                    <grb:GroupBox x:Name="grbTrakt" Header="Trakt"
+                        Theme="{StaticResource GroupBoxClassic}">
+                        <StackPanel Margin="10">
+                            <Label x:Name="lblWarnPeriod">
+                                You have 15 mins to enter pin code and start import
+                            </Label>
+                            <TextBox x:Name="txtTraktPinCode"
+                                Text="Authorise and then enter pin code here..."
+                                PointerPressed="txtTraktPinCode_Click"
+                                PropertyChanged="txtTraktPinCode_TextChanged" />
+                            <Button Classes="link" x:Name="lnkTraktOAuth"
+                                Click="lnkTraktOAuth_LinkClicked">Click to Authorise access to your
+                                account</Button>
+                        </StackPanel>
+                    </grb:GroupBox>
+                    <grb:GroupBox x:Name="grbPaypal" Header="Paypal"
+                        Theme="{StaticResource GroupBoxClassic}"
+                    >
+                        <StackPanel Margin="10">
+                            <Label x:Name="lblPaypal">
+                                If you enjoy using the Trakt Rater tool please consider donating to
+                                ensure continued development.
+                            </Label>
+                            <Image x:Name="pbPaypal" Width="48" Height="48"
+                                Source="/Assets/paypal.png"
+                                PointerPressed="pbPaypal_Click"
+                                Stretch="Fill" />
+                            <Button Classes="link" x:Name="lnkPaypal"
+                                Click="lnkPaypal_LinkClicked">https://www.paypal.me/damienlhaynes</Button>
+                        </StackPanel>
+                    </grb:GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="tabPage2" Header="TVDb">
+                <StackPanel Margin="10">
+                    <grb:GroupBox x:Name="grbTVDb" Header="TVDb"
+                        Theme="{StaticResource GroupBoxClassic}">
+                        <StackPanel Margin="10">
+                            <CheckBox x:Name="chkTVDbEnabled" Margin="0,0,10,0"
+                                Checked="chkTVDbEnabled_CheckedChanged">Enabled</CheckBox>
+                            <Label x:Name="lblTVDbAccountId">Account Identifier:</Label>
+                            <TextBox x:Name="txtTVDbAccountId"
+                                Text="Authorise and then enter pin code here..."
+                                PropertyChanged="txtTVDbAccountId_TextChanged"
+                                ToolTip.Tip="The Account Identifier can be found in the account tab of http://thetvdb.com website. It is 16 hexidecimal characters e.g.EB6D329D10E3835A" />
+                        </StackPanel>
+                    </grb:GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="tabPage3" Header="TMDb" Padding="3">
+                <grb:GroupBox x:Name="grbTMDb" Header="TMDb"
+                        Theme="{StaticResource GroupBoxClassic}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="chkTMDbEnabled" Margin="0,0,10,0"
+                            Checked="chkTMDbEnabled_CheckedChanged">Enabled</CheckBox>
+                        <CheckBox x:Name="chkTMDbSyncWatchlist" Margin="0,0,10,0"
+                            Checked="chkTMDbSyncWatchlist_CheckedChanged">Sync Watchlist</CheckBox>
+                        <Button Classes="link" x:Name="lnkTMDbStart"
+                            Click="lnkTMDbStart_LinkClicked">Start Request Process</Button>
+                        <Label x:Name="lblTMDbMessage">To get user ratings from TMDb you must first allow this application to access your account details. This needs to be done by you in a webbrowser.</Label>
+                    </StackPanel>
+                </grb:GroupBox>
+            </TabItem>
+            <TabItem x:Name="tabPage4" Header="IMDb" Padding="3">
+                <grb:GroupBox x:Name="grmImdb" Header="IMDb"
+                        Theme="{StaticResource GroupBoxClassic}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="chkIMDbEnabled" Margin="0,0,10,0"
+                            Checked="chkIMDbEnabled_CheckedChanged">Enabled</CheckBox>
+                        <Label x:Name="lblImdbNote" Padding="2,0,2,0">Note: If web-scrape option is selected and fails, this may indicate a change to the IMDb website. Please fallback to CSV import instead.</Label>
+                        <Label x:Name="lblImdbCustomLists">Custom Lists:</Label>
+                        <Button x:Name="btnImdbDeleteList"
+                            Click="btnImdbDeleteList_Click">-</Button>
+                        <Button x:Name="btnImdbAddList"
+                            Click="btnImdbAddList_Click">+</Button>
+                        <ListBox x:Name="lsImdbCustomLists"></ListBox>
+                        <CheckBox x:Name="chkImdbWebWatchlist" Margin="0,0,10,0"
+                            Checked="chkImdbWatchlist_CheckedChanged">Sync Watchlist</CheckBox>
+                        <StackPanel Orientation="Horizontal">
+                            <Label x:Name="lblImdbWatchlistFile">Watchlist File:</Label>
+                            <TextBox x:Name="txtImdbWatchlistFile"
+                                    PropertyChanged="txtImdbWatchlistFile_TextChanged"
+                                    ToolTip.Tip="Leave field blank if you're not interested in importing a watchlist from IMDb to trakt.tv." />
+                            <Button x:Name="btnImdbWatchlistBrowse"
+                                Click="btnImdbWatchlistBrowse_Click">...</Button>
+                        </StackPanel>
+                        <Label x:Name="lblImdbRatingsFile">Ratings File:</Label>
+                        <Label x:Name="lblImdbDescription">Select 'CSV Import' (recommended) for static file import or 'Web Scrape' for web retrieval:</Label>
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="rdnImdbUsername" Content="Web Scrape"></RadioButton>
+                            <TextBox x:Name="txtImdbWebUsername"
+                                PropertyChanged="txtImdbWebUsername_TextChanged"
+                                ToolTip.Tip="Your IMDb User ID starts with 'ur', you can get this from the IMDb website from the address bar when in your profile. This option only works for profiles marked as 'Public'. Private profiles should use CSV option." />
+                            <RadioButton x:Name="rdnImdbCSV" Content="CSV Import" Checked="rdnImdbCSV_CheckedChanged" IsChecked="True"></RadioButton>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="txtImdbRatingsFilename"
+                                    PropertyChanged="txtImdbRatingsFilename_TextChanged"
+                                    ToolTip.Tip="You can export your ratings history to csv from your IMDb account settings. Once you have downloaded file, you can specify filename in this textbox." />
+                                <Button  x:Name="btnImdbRatingsBrowse"
+                                    Click="btnImdbRatingsBrowse_Click">...</Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </grb:GroupBox>
+            </TabItem>
+            <TabItem x:Name="tabPage5" Header="Listal" Padding="3">
+                <grb:GroupBox x:Name="grbListal" Header="Listal"
+                        Theme="{StaticResource GroupBoxClassic}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="chkListalEnabled" Margin="0,0,10,0"
+                            Checked="chkListalEnabled_CheckedChanged">Enabled</CheckBox>
+                        <StackPanel Orientation="Horizontal">
+                            <Label x:Name="lblListalShowExportFile" Padding="2,0,2,0">TV Show Export File:</Label>
+                            <TextBox x:Name="txtListalShowXMLExport" PropertyChanged="txtListalShowXMLExport_TextChanged" />
+                            <Button  x:Name="btnListalShowXMLExport" Click="btnListalShowXMLExport_Click">...</Button>
+                        </StackPanel>
+                        <Label x:Name="lblListalLinkInfo" Padding="2,0,2,0">Logon into the Listal website, then download export files from link below:</Label>
+                        <Button Classes="link" x:Name="lnkListalExport" Click="lnkListalExport_LinkClicked">Get your Listal export file(s) here</Button>
+                        <CheckBox x:Name="chkListalWebWatchlist" Margin="0,0,10,0"
+                            Checked="chkListalWebWatchlist_CheckedChanged">Sync Wantlist to Watchlist</CheckBox>
+                        <StackPanel Orientation="Horizontal">
+                            <Label x:Name="lblListalMovieExportFile" Padding="2,0,2,0">Movie Export File:</Label>
+                            <TextBox x:Name="txtListalMovieXMLExport"
+                                PropertyChanged="txtListalMovieXMLExport_TextChanged" />
+                            <Button  x:Name="btnListalMovieXMLExport" Click="btnListalMovieXMLExport_Click">...</Button>
+                        </StackPanel>
+                    </StackPanel>
+                </grb:GroupBox>
+            </TabItem>
+            <TabItem x:Name="tabPage6" Header="Criticker" Padding="3">
+                <grb:GroupBox x:Name="grbCriticker" Header="Criticker"
+                        Theme="{StaticResource GroupBoxClassic}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="chkCritickerEnabled" Margin="0,0,10,0"
+                            Checked="chkCritickerEnabled_CheckedChanged">Enabled</CheckBox>
+                        <StackPanel Orientation="Horizontal">
+                            <Label x:Name="lblCritickerCSVExportFile" Padding="2,0,2,0">CSV Export File</Label>
+                            <TextBox x:Name="txtCritickerCSVExportFile" PropertyChanged="txtCritickerCSVExportFile_TextChanged" />
+                            <Button  x:Name="btnCritickerCSVExportBrowse" Click="btnCritickerCSVExportBrowse_Click">...</Button>
+                        </StackPanel>
+                    </StackPanel>
+                </grb:GroupBox>
+            </TabItem>
+            <TabItem x:Name="tabPage7" Header="Letterboxd" Padding="3">
+                <grb:GroupBox x:Name="grbLetterboxd" Header="Letterboxd"
+                        Theme="{StaticResource GroupBoxClassic}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="chkLetterboxdEnabled" Margin="0,0,10,0"
+                            Checked="chkLetterboxdEnabled_CheckedChanged">Enabled</CheckBox>
+                        <StackPanel Orientation="Horizontal">
+                            <Label x:Name="lblLetterboxdWatchlist" Padding="2,0,2,0">CSV Export File</Label>
+                            <TextBox x:Name="txtLetterboxdWatchlistFile" PropertyChanged="txtLetterboxdWatchlistFile_TextChanged" />
+                            <Button  x:Name="btnLetterboxdWatchlistBrowse" Click="btnLetterboxdWatchlistBrowse_Click">...</Button>
+                        </StackPanel>
+                    </StackPanel>
+                </grb:GroupBox>
+            </TabItem>
+            <TabItem x:Name="tabPage8" Header="Flixter" Padding="3">
+                <grb:GroupBox x:Name="grbFlixster" Header="Flixster"
+                        Theme="{StaticResource GroupBoxClassic}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="chkFlixsterEnabled" Margin="0,0,10,0"
+                            Checked="chkFlixsterEnabled_CheckedChanged">Enabled</CheckBox>
+                        <Label x:Name="lblFlixsterUserIdDesc" Padding="2,0,2,0">Get your User ID from your profile page URL e.g. http://www.flixster.com/user/YOUR_USER_ID/</Label>
+                        <StackPanel Orientation="Horizontal">
+                            <Label x:Name="lblFlisterUserId" Padding="2,0,2,0">User ID:</Label>
+                            <TextBox x:Name="txtFlixsterUserId" PropertyChanged="txtFlixsterUserId_TextChanged" />
+                        </StackPanel>
+                        <CheckBox x:Name="chkFlixsterSyncWantToSee" Margin="0,0,10,0"
+                            Checked="chkFlixsterSyncWantToSee_CheckedChanged">Sync 'Want To See' to Watchlist</CheckBox>
+                    </StackPanel>
+                </grb:GroupBox>
+            </TabItem>
+            <TabItem x:Name="tabPage9" Header="iCheckMovies" Padding="3"></TabItem>
+            <TabItem x:Name="tabPage10" Header="ToDoMovies" Padding="3"></TabItem>
+            <TabItem x:Name="tabPage11" Header="MovieLens" Padding="3"></TabItem>
+            <TabItem x:Name="tabPage12" Header="Options" Padding="3"></TabItem>
+        </TabControl>
+    </StackPanel>
+</Window>

@@ -4,7 +4,7 @@ using TraktRater.Extensions;
 
 namespace TraktRater.Sites.API.MovieLens
 {
-    sealed class CSVActivityFileDefinitionMap : CsvClassMap<MovieLensActivityItem>
+    sealed class CSVActivityFileDefinitionMap : ClassMap<MovieLensActivityItem>
     {
         public CSVActivityFileDefinitionMap()
         {
@@ -60,7 +60,7 @@ namespace TraktRater.Sites.API.MovieLens
         [DataContract]
         private class RatingActivity : Activity
         {
-            [DataMember(Name= "rating")]
+            [DataMember(Name = "rating")]
             public float Rating { get; set; }
 
             [DataMember(Name = "pred")]

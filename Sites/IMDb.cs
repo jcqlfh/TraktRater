@@ -11,6 +11,7 @@
     using global::TraktRater.UI;
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -18,10 +19,10 @@
     public class IMDb : IRateSite
     {
         #region Variables
-  
+
         internal static bool mImportCancelled = false;
 
-        readonly CsvConfiguration mCsvConfiguration = new CsvConfiguration();
+        readonly CsvConfiguration mCsvConfiguration = new CsvConfiguration(CultureInfo.CurrentCulture);
 
         readonly string mRatingsFileCsv = null;
         readonly string mWatchlistFileCsv = null;
@@ -40,7 +41,7 @@
             Enabled = aEnabled;
 
             if (!aEnabled) return;
-            
+
             mImportCsvRatings = !string.IsNullOrEmpty(aRatingsFile);
             mImportCsvWatchlist = !string.IsNullOrEmpty(aWatchlistFile);
             mImportCsvCustomLists = aImdbCustomLists.Count > 0;
@@ -67,21 +68,21 @@
             var lRatedCsvItems = new List<IMDbRateItem>();
             var lWatchlistCsvItems = new List<IMDbListItem>();
             var lCustomLists = new Dictionary<string, List<IMDbListItem>>();
-            
+
             #region Parse Ratings CSV
             UIUtils.UpdateStatus("Reading IMDb ratings export...");
             if (mImportCsvRatings)
             {
-                mCsvConfiguration.RegisterClassMap<IMDbRatingCsvMap>();
-                
-                lRatedCsvItems = ParseCsvFile<IMDbRateItem>(mRatingsFileCsv);
+                //mCsvConfiguration.RegisterClassMap<IMDbRatingCsvMap>();
+
+                lRatedCsvItems = ParseCsvFile<IMDbRateItem, IMDbRatingCsvMap>(mRatingsFileCsv);
                 if (lRatedCsvItems == null)
                 {
                     UIUtils.UpdateStatus("Failed to parse IMDb ratings file!", true);
                     Thread.Sleep(2000);
                     return;
                 }
-                mCsvConfiguration.UnregisterClassMap<IMDbRatingCsvMap>();
+                //mCsvConfiguration.UnregisterClassMap<IMDbRatingCsvMap>();
             }
             if (mImportCancelled) return;
             #endregion
@@ -90,16 +91,16 @@
             UIUtils.UpdateStatus("Reading IMDb watchlist export...");
             if (mImportCsvWatchlist)
             {
-                mCsvConfiguration.RegisterClassMap<IMDbListCsvMap>();
+                //mCsvConfiguration.RegisterClassMap<IMDbListCsvMap>();
 
-                lWatchlistCsvItems = ParseCsvFile<IMDbListItem>(mWatchlistFileCsv);
+                lWatchlistCsvItems = ParseCsvFile<IMDbListItem, IMDbListCsvMap>(mWatchlistFileCsv);
                 if (lWatchlistCsvItems == null)
                 {
                     UIUtils.UpdateStatus("Failed to parse IMDb watchlist file!", true);
                     Thread.Sleep(2000);
                     return;
                 }
-                mCsvConfiguration.UnregisterClassMap<IMDbListCsvMap>();
+                //mCsvConfiguration.UnregisterClassMap<IMDbListCsvMap>();
             }
             if (mImportCancelled) return;
             #endregion
@@ -108,13 +109,13 @@
             UIUtils.UpdateStatus("Reading IMDb custom lists export...");
             if (mImportCsvCustomLists)
             {
-                mCsvConfiguration.RegisterClassMap<IMDbListCsvMap>();
+                //mCsvConfiguration.RegisterClassMap<IMDbListCsvMap>();
 
                 foreach (var list in mCustomListsCsvs)
                 {
                     UIUtils.UpdateStatus($"Reading IMDb custom list '{list}'");
 
-                    var lListCsvItems = ParseCsvFile<IMDbListItem>(list);
+                    var lListCsvItems = ParseCsvFile<IMDbListItem, IMDbListCsvMap>(list);
                     if (lListCsvItems == null)
                     {
                         UIUtils.UpdateStatus("Failed to parse IMDb custom list file!", true);
@@ -123,7 +124,7 @@
                     }
                     lCustomLists.Add(list, lListCsvItems);
                 }
-                mCsvConfiguration.UnregisterClassMap<IMDbListCsvMap>();
+                //mCsvConfiguration.UnregisterClassMap<IMDbListCsvMap>();
             }
             if (mImportCancelled) return;
             #endregion
@@ -152,14 +153,14 @@
                     int lPageSize = AppSettings.BatchSize;
                     int lPages = (int)Math.Ceiling((double)lRatedCsvMovies.Count / lPageSize);
                     for (int i = 0; i < lPages; i++)
-                    {   
+                    {
                         UIUtils.UpdateStatus($"Importing page {i + 1}/{lPages} IMDb rated movies...");
 
                         var lRatingsToSync = new TraktMovieRatingSync()
                         {
                             movies = lRatedCsvMovies.Skip(i * lPageSize).Take(lPageSize).ToList()
                         };
-                        
+
                         TraktSyncResponse lResponse = TraktAPI.AddMoviesToRatings(lRatingsToSync);
                         if (lResponse == null)
                         {
@@ -193,7 +194,7 @@
                 {
                     UIUtils.UpdateStatus($"Found {lCurrentUserShowRatings.Count()} user tv show ratings on trakt.tv");
                     // Filter out shows to rate from existing ratings online
-                    lRatedCsvShows.RemoveAll(s => lCurrentUserShowRatings.Any(c => (c.Show.Ids.ImdbId == s.Ids.ImdbId) || 
+                    lRatedCsvShows.RemoveAll(s => lCurrentUserShowRatings.Any(c => (c.Show.Ids.ImdbId == s.Ids.ImdbId) ||
                                                                                    (c.Show.Title.ToLowerInvariant() == s.Title.ToLowerInvariant() && c.Show.Year == s.Year)));
                 }
 
@@ -313,7 +314,7 @@
                         UIUtils.UpdateStatus($"Found {lWatchedTraktMovies.Count()} watched movies on trakt");
                         UIUtils.UpdateStatus("Filtering out watched movies that are already watched on trakt.tv");
 
-                        lWatchedCsvMovies.RemoveAll(w => lWatchedTraktMovies.FirstOrDefault(t => t.Movie.Ids.ImdbId == w.Ids.ImdbId || 
+                        lWatchedCsvMovies.RemoveAll(w => lWatchedTraktMovies.FirstOrDefault(t => t.Movie.Ids.ImdbId == w.Ids.ImdbId ||
                                                                                                 (t.Movie.Title.ToLowerInvariant() == w.Title.ToLowerInvariant() && t.Movie.Year == w.Year)) != null);
 
                         // mark all rated movies as watched
@@ -326,7 +327,7 @@
                             UIUtils.UpdateStatus($"Importing page {i + 1}/{lPages} IMDb movies as watched...");
 
                             var lMoviesToSync = new TraktMovieWatchedSync()
-                            {                                
+                            {
                                 Movies = lWatchedCsvMovies.Skip(i * lPageSize).Take(lPageSize).ToList()
                             };
 
@@ -390,7 +391,7 @@
                 {
                     UIUtils.UpdateStatus($"Found {lWatchlistTraktMovies.Count()} watchlist movies on trakt");
                     UIUtils.UpdateStatus("Filtering out watchlist movies that are already in watchlist on trakt.tv");
-                    lWatchlistedCsvMovies.RemoveAll(w => lWatchlistTraktMovies.FirstOrDefault(t => t.Movie.Ids.ImdbId == w.Ids.ImdbId || 
+                    lWatchlistedCsvMovies.RemoveAll(w => lWatchlistTraktMovies.FirstOrDefault(t => t.Movie.Ids.ImdbId == w.Ids.ImdbId ||
                                                                                                   (t.Movie.Title.ToLowerInvariant() == w.Title.ToLowerInvariant() && t.Movie.Year == w.Year)) != null);
                 }
 
@@ -415,7 +416,7 @@
                         UIUtils.UpdateStatus("Filtering out watchlist movies that are watched on trakt.tv");
 
                         // remove movies from sync list which are watched already
-                        lWatchlistedCsvMovies.RemoveAll(w => lWatchedTraktMovies.FirstOrDefault(t => t.Movie.Ids.ImdbId == w.Ids.ImdbId || 
+                        lWatchlistedCsvMovies.RemoveAll(w => lWatchedTraktMovies.FirstOrDefault(t => t.Movie.Ids.ImdbId == w.Ids.ImdbId ||
                                                                                                     (t.Movie.Title.ToLowerInvariant() == w.Title.ToLowerInvariant() && t.Movie.Year == w.Year)) != null);
                     }
                 }
@@ -466,7 +467,7 @@
                 {
                     UIUtils.UpdateStatus($"Found {lWatchlistTraktShows.Count()} watchlist shows on trakt");
                     UIUtils.UpdateStatus("Filtering out watchlist shows that are already in watchlist on trakt.tv");
-                    lWatchlistedCsvShows.RemoveAll(w => lWatchlistTraktShows.FirstOrDefault(t => t.Show.Ids.ImdbId == w.Ids.ImdbId || 
+                    lWatchlistedCsvShows.RemoveAll(w => lWatchlistTraktShows.FirstOrDefault(t => t.Show.Ids.ImdbId == w.Ids.ImdbId ||
                                                                                                 (t.Show.Title.ToLowerInvariant() == w.Title.ToLowerInvariant() && t.Show.Year == w.Year)) != null);
                 }
 
@@ -482,7 +483,7 @@
                         UIUtils.UpdateStatus("Filtering out watchlist shows containing watched episodes on trakt.tv.");
 
                         // remove shows from sync list which are watched already
-                        lWatchlistedCsvShows.RemoveAll(w => lWatchedTraktShows.FirstOrDefault(t => (t.Show.Ids.ImdbId == w.Ids.ImdbId) || 
+                        lWatchlistedCsvShows.RemoveAll(w => lWatchedTraktShows.FirstOrDefault(t => (t.Show.Ids.ImdbId == w.Ids.ImdbId) ||
                                                                                                    (t.Show.Title.ToLowerInvariant() == w.Title.ToLowerInvariant() && t.Show.Year == w.Year)) != null);
                     }
                 }
@@ -559,7 +560,7 @@
 
                         // this wont work atm due to show IMDb ID not being set in the IMDbEpisode object
                         lImdbWatchlistedEpisodes.RemoveAll(e => lWatchedTraktShows.Where(s => s.Show.Ids.ImdbId == e.ShowImdbId)
-                                                                                              .Any(s => s.Seasons.Exists(se => se.Number == e.SeasonNumber && 
+                                                                                              .Any(s => s.Seasons.Exists(se => se.Number == e.SeasonNumber &&
                                                                                                                                se.Episodes.Exists(ep => ep.Number == e.EpisodeNumber))));
                     }
                 }
@@ -636,7 +637,7 @@
 
                     // get the CSV list items parsed
                     var lIMDbCsvListItems = list.Value;
-                    
+
                     var lImdbCsvListMovies = lIMDbCsvListItems.Where(l => l.Type.ItemType() == IMDbType.Movie).Select(m => m.ToTraktMovie()).ToList();
                     var lImdbCsvListShows = lIMDbCsvListItems.Where(l => l.Type.ItemType() == IMDbType.Show).Select(m => m.ToTraktShow()).ToList();
 
@@ -646,7 +647,7 @@
                     if (!lListCreated)
                     {
                         lTraktCustomList = lTraktCustomLists.FirstOrDefault(l => l.Name == lListName);
-                        
+
                         UIUtils.UpdateStatus($"Requesting existing custom list '{lListName}' items from trakt...");
                         var lTraktListItems = TraktAPI.GetCustomListItems(lTraktCustomList.Ids.Trakt.ToString());
                         if (lTraktListItems == null)
@@ -740,20 +741,20 @@
         #endregion
 
         #region Private Methods
-        
+
         private void SetCSVHelperOptions()
         {
-            mCsvConfiguration.IsHeaderCaseSensitive = false;
+            //mCsvConfiguration.IsHeaderCaseSensitive = false;
 
             // IMDb use "." for decimal seperator so set culture to cater for this            
-            mCsvConfiguration.CultureInfo = new System.Globalization.CultureInfo("en-US");
+            //mCsvConfiguration.CultureInfo = new System.Globalization.CultureInfo("en-US");
 
             // if we're unable parse a row, log the details for analysis
-            mCsvConfiguration.IgnoreReadingExceptions = true;
-            mCsvConfiguration.ReadingExceptionCallback = (ex, row) =>
-            {
-                FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
-            };
+            // mCsvConfiguration.IgnoreReadingExceptions = true;
+            // mCsvConfiguration.ReadingExceptionCallback = (ex, row) =>
+            // {
+            //     FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
+            // };
         }
 
         /// <summary>
@@ -762,15 +763,16 @@
         /// <typeparam name="T">IMDbListItem or IMDbRateItem</typeparam>
         /// <param name="aFilename">Full path to CSV file to read</param>
         /// <returns>Records of type T</returns>
-        private List<T> ParseCsvFile<T>(string aFilename)
+        private List<T> ParseCsvFile<T, C>(string aFilename) where C : ClassMap
         {
             using (var reader = new StreamReader(aFilename))
             using (var csv = new CsvReader(reader, mCsvConfiguration))
             {
+                csv.Context.RegisterClassMap<C>();
                 return csv.GetRecords<T>().ToList();
             }
         }
-        
+
         #endregion
     }
 

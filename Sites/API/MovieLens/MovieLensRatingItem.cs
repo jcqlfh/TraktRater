@@ -6,7 +6,7 @@ using System;
 
 namespace TraktRater.Sites.API.MovieLens
 {
-    sealed class CSVRatingsFileDefinitionMap : CsvClassMap<MovieLensRatingItem>
+    sealed class CSVRatingsFileDefinitionMap : ClassMap<MovieLensRatingItem>
     {
         public CSVRatingsFileDefinitionMap()
         {
@@ -21,7 +21,7 @@ namespace TraktRater.Sites.API.MovieLens
 
     class MovieLensRatingItem
     {
-        public string Title { get; set; }        
+        public string Title { get; set; }
         public float Rating { get; set; }
         public float AverageRating { get; set; }
         public int MovieId { get; set; }
@@ -33,7 +33,7 @@ namespace TraktRater.Sites.API.MovieLens
             return new TraktMovieRating()
             {
                 Ids = new TraktMovieId()
-                { 
+                {
                     TmdbId = TmdbId,
                     ImdbId = "tt" + ImdbId.ToString().PadLeft(7, '0')
                 },

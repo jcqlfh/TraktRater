@@ -633,24 +633,24 @@
         /// <returns>Records of type T</returns>
         private List<T> ParseCsvFile<T>(StreamReader aFileStreamReader)
         {
-            CsvConfiguration csvConfiguration = new CsvConfiguration
+            CsvConfiguration csvConfiguration = new CsvConfiguration(new System.Globalization.CultureInfo("en-US"))
             {
-                IsHeaderCaseSensitive = false,
+                // IsHeaderCaseSensitive = false,
 
-                // IMDb use "." for decimal seperator so set culture to cater for this            
-                CultureInfo = new System.Globalization.CultureInfo("en-US"),
+                // // IMDb use "." for decimal seperator so set culture to cater for this            
+                // CultureInfo = new System.Globalization.CultureInfo("en-US"),
 
-                // if we're unable parse a row, log the details for analysis
-                IgnoreReadingExceptions = true,
-                ReadingExceptionCallback = (ex, row) =>
-                {
-                    FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
-                }
+                // // if we're unable parse a row, log the details for analysis
+                // IgnoreReadingExceptions = true,
+                // ReadingExceptionCallback = (ex, row) =>
+                // {
+                //     FileLog.Error($"Error reading row '{ex.Data["CsvHelper"]}'");
+                // }
             };
-            csvConfiguration.RegisterClassMap<IMDbListCsvMap>();
 
             using (var csv = new CsvReader(aFileStreamReader, csvConfiguration))
             {
+                csv.Context.RegisterClassMap<IMDbListCsvMap>();
                 List<T> records = csv.GetRecords<T>().ToList();
                 aFileStreamReader.Close();
 

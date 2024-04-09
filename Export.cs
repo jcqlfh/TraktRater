@@ -5,6 +5,7 @@ using System.Threading;
 using System.Linq;
 using TraktRater.UI;
 using TraktRater.Settings;
+using System.Globalization;
 
 namespace TraktRater
 {
@@ -76,7 +77,7 @@ namespace TraktRater
                         Title = item.Movie.Title,
                         Year = item.Movie.Year,
                         WatchedAt = item.WatchedAt,
-                        Plays = item.Plays                        
+                        Plays = item.Plays
                     });
                 }
 
@@ -194,7 +195,7 @@ namespace TraktRater
                         EpisodeTitle = item.Episode.Title,
                         RatedAt = item.RatedAt,
                         Rating = item.Rating
-                    });      
+                    });
                 }
 
                 UIUtils.UpdateStatus("Creating rated episodes csv file");
@@ -331,7 +332,7 @@ namespace TraktRater
                         ShowTmdbId = item.Show.Ids.TmdbId,
                         ShowSlug = item.Show.Ids.Slug,
                         ShowTitle = item.Show.Title,
-                        ShowYear = item.Show.Year,                        
+                        ShowYear = item.Show.Year,
                         EpisodeImdbId = item.Episode.Ids.ImdbId,
                         EpisodeTmdbId = item.Episode.Ids.TmdbId,
                         EpisodeTraktId = item.Episode.Ids.Trakt,
@@ -439,7 +440,7 @@ namespace TraktRater
                 {
                     moviesWatchlisted.Add(new
                     {
-                        TraktId = item.Movie.Ids.Trakt,                        
+                        TraktId = item.Movie.Ids.Trakt,
                         ImdbId = item.Movie.Ids.ImdbId,
                         TmdbId = item.Movie.Ids.TmdbId,
                         Slug = item.Movie.Ids.Slug,
@@ -581,7 +582,7 @@ namespace TraktRater
 
             // Next get the items for each custom list
 
-            foreach(var list in customLists)
+            foreach (var list in customLists)
             {
                 UIUtils.UpdateStatus($"Getting custom list items for '{list.Name}' from trakt.tv");
                 var customListItems = TraktAPI.TraktAPI.GetCustomListItems(list.Ids.Trakt.ToString());
@@ -623,7 +624,7 @@ namespace TraktRater
                             PersonImdbId = item.Person?.Ids.ImdbId,
                             PersonTmdbId = item.Person?.Ids.TmdbId,
                             PersonSlug = item.Person?.Ids.Slug
-                        });                        
+                        });
                     }
 
                     UIUtils.UpdateStatus($"Creating custom list '{list.Name}' csv file");
@@ -652,7 +653,7 @@ namespace TraktRater
 
                 // store the results from the first page request
                 var pagedItems = firstPage.Comments;
-                
+
                 for (i = 2; i <= firstPage.TotalPages; i++)
                 {
                     UIUtils.UpdateStatus($"Getting commented episodes from trakt.tv, Page: {i}/{pageCount}");
@@ -662,7 +663,7 @@ namespace TraktRater
                     // add the next page of items to the collection
                     pagedItems = pagedItems.Union(nextPage.Comments);
                 }
-                
+
                 var episodesCommented = new List<object>();
                 foreach (var item in pagedItems)
                 {
@@ -750,7 +751,7 @@ namespace TraktRater
                         ShowSlug = item.Show.Ids.Slug,
                         ShowTitle = item.Show.Title,
                         ShowYear = item.Show.Year,
-                        SeasonTraktId = item.Season.Ids.Trakt,           
+                        SeasonTraktId = item.Season.Ids.Trakt,
                         SeasonTmdbId = item.Season.Ids.TmdbId,
                         SeasonsTvdbId = item.Season.Ids.TvdbId,
                         Season = item.Season.Number
@@ -967,7 +968,7 @@ namespace TraktRater
                 foreach (var item in pagedItems)
                 {
                     listsLiked.Add(new
-                    {   
+                    {
                         ListId = item.List.Ids.Trakt,
                         LikedAt = item.LikedAt,
                         ListSlug = item.List.Ids.Slug,
@@ -1043,7 +1044,7 @@ namespace TraktRater
                 Directory.CreateDirectory(directory);
 
             using (var writer = new StreamWriter(filename))
-            using (var csv = new CsvWriter(writer))
+            using (var csv = new CsvWriter(writer, CultureInfo.CurrentCulture))
             {
                 csv.WriteRecords(records);
             }

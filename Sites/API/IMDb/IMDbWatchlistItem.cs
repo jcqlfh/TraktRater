@@ -3,7 +3,7 @@
     using CsvHelper.Configuration;
     using global::TraktRater.TraktAPI.DataStructures;
 
-    sealed class IMDbListCsvMap : CsvClassMap<IMDbListItem>
+    sealed class IMDbListCsvMap : ClassMap<IMDbListItem>
     {
         public IMDbListCsvMap()
         {
@@ -61,7 +61,7 @@
         public string ReleaseDate { get; set; }
 
         public string Directors { get; set; }
-        
+
         public TraktMovie ToTraktMovie()
         {
             return new TraktMovie()
